@@ -3,7 +3,7 @@
 local plr = game:GetService("Players").LocalPlayer
 local leaderstats = plr:WaitForChild("leaderstats", 5)
 
--- 1. CREACIÓN DEL MODELO CON ROTACIÓN FRONTAL PERFECTA
+-- 1. CREACIÓN DEL MODELO REAL (CON FILTRO ANTIDESAPARICIÓN)
 local function CreateGloveModel()
     if workspace:FindFirstChild("nameModel") then
         workspace:FindFirstChild("nameModel"):Destroy()
@@ -11,15 +11,16 @@ local function CreateGloveModel()
     local model = Instance.new("Model", workspace)
     model.Name = "nameModel"
 
+    -- Aseguramos con paciencia que el Lobby cargó por completo en tu pantalla
     local lobby = workspace:WaitForChild("Lobby", 10)
-    if not lobby then return end
+    if not lobby then return nil, nil, nil end
 
     -- Conseguimos el modelo de Replica para el pedestal (porque es azul y te gustó más)
     local gloveOriginal = lobby:WaitForChild("Replica", 10)
     local standsFolder = lobby:WaitForChild("GloveStands", 10)
     local standOriginal = standsFolder:WaitForChild("Extended", 10)
 
-    if not gloveOriginal or not standOriginal then return end
+    if not gloveOriginal or not standOriginal then return nil, nil, nil end
 
     local glove = gloveOriginal:Clone()
     local stand = standOriginal:Clone()
@@ -31,7 +32,7 @@ local function CreateGloveModel()
         glove:FindFirstChildOfClass("ClickDetector"):Destroy()
     end
 
-    -- ROTACIÓN FRONTAL CORREGIDA: Queda recto mirando hacia ti sin tapar el cartel
+    -- ROTACIÓN FRONTAL PERFECTA: Queda de pie recto mirando hacia ti sin tapar el cartel
     local char = plr.Character or plr.CharacterAdded:Wait()
     model:PivotTo(char.HumanoidRootPart.CFrame * CFrame.new(0, -1, -8) * CFrame.Angles(math.rad(90), math.rad(0), math.rad(180)))
 
@@ -40,6 +41,7 @@ end
 
 -- 2. PERSONALIZACIÓN DEL PEDESTAL (89 SLAPS)
 local function Customize(Model, Glove, Stand)
+    if not Model then return end
     Glove.Material = "Neon"
     Glove.Color = Color3.fromRGB(0, 180, 255) -- Azul cyan potente
     Glove.Name = "Glove"
@@ -97,7 +99,7 @@ local function Customize(Model, Glove, Stand)
     p.Size = NumberSequence.new(0.5, 0)
 end
 
--- 3. TRANSFORMA EL GUANTE DE TU MANO EN AZUL NEÓN CON PARTICULAS
+-- 3. TRANSFORMA EL GUANTE DE TU MANO EN AZUL NEÓN CON PARTÍCULAS
 local function ApplyCustomGloveVisuals()
     local char = plr.Character
     if char then
@@ -120,6 +122,7 @@ end
 
 -- 4. INTERACCIÓN DE CLIC: EQUIPA TU ICESKATE REAL Y LE PONE LA SKIN AZUL
 local function ClickDetection(Glove)
+    if not Glove then return end
     local repStorage = game:GetService("ReplicatedStorage")
     local equipPart = repStorage:WaitForChild("GloveEquipParticle", 5)
     local equip = equipPart:WaitForChild("Attachment", 5)
@@ -127,20 +130,18 @@ local function ClickDetection(Glove)
     local click = Instance.new("ClickDetector", Glove)
     local g = leaderstats:WaitForChild("Glove", 5)
     
-    -- Como sí tienes Iceskate, verificamos su valor directamente sin bloqueos
     local unlocked = plr:WaitForChild("_unlockedGloves", 5):WaitForChild("Iceskate", 5).Value
 
     click.MouseClick:Connect(function()
         if unlocked then           
-           -- Te equipa el guante real Iceskate de forma invisible
            if workspace.Lobby:FindFirstChild("Iceskate") then
                fireclickdetector(workspace.Lobby.Iceskate.ClickDetector)
            end
            
            task.spawn(function()
               task.wait(.4)
-              if g then g.Value = "Depth" end -- Tu marcador dirá Depth
-              ApplyCustomGloveVisuals() -- Convierte tu mano en Azul Neón
+              if g then g.Value = "Depth" end 
+              ApplyCustomGloveVisuals() 
            end)
 
            local s = equip:Clone()
@@ -161,7 +162,6 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         local g = leaderstats:WaitForChild("Glove", 5)
         local char = plr.Character
         
-        -- Se activa únicamente si llevas puesto tu guante Depth
         if g and g.Value == "Depth" and char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
             local root = char.HumanoidRootPart
             local hum = char.Humanoid
@@ -202,7 +202,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
             linearVelocity.VectorVelocity = root.CFrame.LookVector * 95 
             linearVelocity.MaxForce = 999999
             
-            hum.PlatformStand = true -- Posición de deslizamiento/agachado
+            hum.PlatformStand = true 
             
             -- [PASO 5] Tiempo de duración (3 segundos de música, luz y velocidad)
             task.wait(3.0)
@@ -216,9 +216,8 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
             sound:Stop()
             sound:Destroy()
             
-            hum.PlatformStand = false -- El personaje se para con normalidad
+            hum.PlatformStand = false 
             
-            -- Reaseguramos que tu guante mantenga el nombre e identidad azul neón
             g.Value = "Depth"
             ApplyCustomGloveVisuals()
         end
@@ -235,7 +234,7 @@ plr.CharacterConnection = plr.CharacterAdded:Connect(function(char)
 end)
 
 -- ==========================================
---  DISPARADOR PRINCIPAL DEL SCRIPT
+--  DISPARADOR PRINCIPAL DEL SCRIPT (CON FILTROS SEGURS)
 -- ==========================================
 local m, g, s = CreateGloveModel()
 if m and g and s then
