@@ -1,4 +1,4 @@
--- [[ Script Definitivo: Guante Depth (Base Iceskate + Modelo Replica Visual + Hyper Dash) ]] --
+-- [[ Script Final Perfeccionado: Guante "Depth" con Base Real Iceskate ]] --
 
 local plr = game:GetService("Players").LocalPlayer
 local leaderstats = plr:WaitForChild("leaderstats", 5)
@@ -15,8 +15,7 @@ local function CreateGloveModel()
     local lobby = workspace:WaitForChild("Lobby", 10)
     if not lobby then return nil, nil, nil end
 
-    -- Conseguimos el modelo de Replica para el pedestal (porque es azul y te gustó más)
-    local gloveOriginal = lobby:WaitForChild("Replica", 10)
+    local gloveOriginal = lobby:WaitForChild("Extended", 10)
     local standsFolder = lobby:WaitForChild("GloveStands", 10)
     local standOriginal = standsFolder:WaitForChild("Extended", 10)
 
@@ -32,9 +31,9 @@ local function CreateGloveModel()
         glove:FindFirstChildOfClass("ClickDetector"):Destroy()
     end
 
-    -- ROTACIÓN FRONTAL PERFECTA: Queda de pie recto mirando hacia ti sin tapar el cartel
+    -- CORREGIDO: Rotación invertida al lado contrario para que quede perfectamente de pie y alineado
     local char = plr.Character or plr.CharacterAdded:Wait()
-    model:PivotTo(char.HumanoidRootPart.CFrame * CFrame.new(0, -1, -8) * CFrame.Angles(math.rad(90), math.rad(0), math.rad(180)))
+    model:PivotTo(char.HumanoidRootPart.CFrame * CFrame.new(0, -1, -8) * CFrame.Angles(math.rad(0), math.rad(-90), math.rad(0)))
 
     return model, glove, stand
 end
@@ -43,7 +42,7 @@ end
 local function Customize(Model, Glove, Stand)
     if not Model then return end
     Glove.Material = "Neon"
-    Glove.Color = Color3.fromRGB(0, 180, 255) -- Azul cyan potente
+    Glove.Color = Color3.fromRGB(0, 180, 255) -- Color azul cyan
     Glove.Name = "Glove"
     Stand.Name = "Stand"
 
@@ -60,11 +59,11 @@ local function Customize(Model, Glove, Stand)
 
     Out.BackgroundColor3 = Color3.new(1,1,1)
 
-    Power.Text = "Power: 65"
-    Speed.Text = "Speed: 25"
+    Power.Text = "Power: 55"
+    Speed.Text = "Speed: 17"
     Name.Text = "Depth"
     Ability.RichText = true
-    Ability.Text = "Ability: Hyper Ice Dash"
+    Ability.Text = "Ability: Ice Skate"
     AbilityType.Text = "Press E To Skate"
 
     for i,v in next, Frame:GetChildren() do
@@ -99,7 +98,7 @@ local function Customize(Model, Glove, Stand)
     p.Size = NumberSequence.new(0.5, 0)
 end
 
--- 3. TRANSFORMA EL GUANTE DE TU MANO EN AZUL NEÓN CON PARTÍCULAS
+-- 3. APLICA LA TEXTURA NEÓN Y EL COLOR AZUL AL GUANTE QUE LLEVAS EN LA MANO
 local function ApplyCustomGloveVisuals()
     local char = plr.Character
     if char then
@@ -113,14 +112,14 @@ local function ApplyCustomGloveVisuals()
                 ep.Name = "DepthParticles"
                 ep.Texture = "rbxassetid://241594247"
                 ep.Color = ColorSequence.new(Color3.fromRGB(0, 255, 255))
-                ep.Rate = 25
+                ep.Rate = 20
                 ep.Size = NumberSequence.new(0.4, 0)
             end
         end
     end
 end
 
--- 4. INTERACCIÓN DE CLIC: EQUIPA TU ICESKATE REAL Y LE PONE LA SKIN AZUL
+-- 4. INTERACCIÓN: EQUIPA ICESKATE AUTOMÁTICAMENTE Y CAMBIA TEXTURA
 local function ClickDetection(Glove)
     if not Glove then return end
     local repStorage = game:GetService("ReplicatedStorage")
@@ -139,93 +138,26 @@ local function ClickDetection(Glove)
            end
            
            task.spawn(function()
-              task.wait(.4)
-              if g then g.Value = "Depth" end 
-              ApplyCustomGloveVisuals() 
+              task.wait(.5)
+              if g then g.Value = "Depth" end
+              ApplyCustomGloveVisuals()
            end)
 
            local s = equip:Clone()
            s.Parent = Glove
            for i,v in next, s:GetDescendants() do if v:IsA("ParticleEmitter") then v:Emit(5) end end 
            task.delay(1, function() if s then s:Destroy() end end)
+        else
+           if workspace:FindFirstChild("Sounds") and workspace.Sounds:FindFirstChild("Fail") then
+               workspace.Sounds.Fail:Play()
+           end
         end
     end)
 end
 
--- 5. MEJORA DE HABILIDAD PARA LA TECLA E (MÚSICA + HIPER VELOCIDAD + LUZ AZUL)
-local UserInputService = game:GetService("UserInputService")
-
-UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
-    if gameProcessedEvent then return end
-    
-    if input.KeyCode == Enum.KeyCode.E then
-        local g = leaderstats:WaitForChild("Glove", 5)
-        local char = plr.Character
-        
-        if g and g.Value == "Depth" and char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
-            local root = char.HumanoidRootPart
-            local hum = char.Humanoid
-            
-            -- [PASO 1] Encendemos el audio personalizado en Loop con tu ID
-            local sound = Instance.new("Sound", root)
-            sound.SoundId = "rbxassetid://72677561439951"
-            sound.Volume = 2.5
-            sound.Looped = true
-            sound:Play()
-            
-            -- [PASO 2] Creamos la luz azul que expulsa el jugador
-            local light = Instance.new("PointLight", root)
-            light.Color = Color3.fromRGB(0, 180, 255)
-            light.Range = 30
-            light.Brightness = 6
-            
-            -- Partículas extras durante el avance veloz
-            local trailParticles = Instance.new("ParticleEmitter", root)
-            trailParticles.Texture = "rbxassetid://241594247"
-            trailParticles.Color = ColorSequence.new(Color3.fromRGB(0, 255, 255))
-            trailParticles.Rate = 70
-            trailParticles.Speed = NumberRange.new(5)
-            trailParticles.Size = NumberSequence.new(0.6, 0)
-
-            -- [PASO 3] Lanzamos la habilidad real al servidor para que el juego sepa que patinas
-            task.spawn(function()
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("IceskateAbility", 2) or game:GetService("ReplicatedStorage"):WaitForChild("GloveAbility", 2)
-                if remote then
-                    remote:FireServer(true)
-                end
-            end)
-
-            -- [PASO 4] SUPER DESLIZAMIENTO EXTRA: Añadimos un empuje físico de velocidad 95 hacia enfrente
-            local attachment = Instance.new("Attachment", root)
-            local linearVelocity = Instance.new("LinearVelocity", root)
-            linearVelocity.Attachment0 = attachment
-            linearVelocity.VectorVelocity = root.CFrame.LookVector * 95 
-            linearVelocity.MaxForce = 999999
-            
-            hum.PlatformStand = true 
-            
-            -- [PASO 5] Tiempo de duración (3 segundos de música, luz y velocidad)
-            task.wait(3.0)
-            
-            -- [PASO 6] LIMPIEZA TOTAL: Eliminamos música, luz y efectos al terminar
-            linearVelocity:Destroy()
-            attachment:Destroy()
-            trailParticles:Destroy()
-            light:Destroy()
-            
-            sound:Stop()
-            sound:Destroy()
-            
-            hum.PlatformStand = false 
-            
-            g.Value = "Depth"
-            ApplyCustomGloveVisuals()
-        end
-    end
-end)
-
--- Re-aplicar la textura azul neón si te eliminan en combate y vuelves a aparecer
-plr.CharacterConnection = plr.CharacterAdded:Connect(function(char)
+-- 5. MANTENER SKIN AL VOLVER A APARECER O CORRER
+local CharacterConnection
+CharacterConnection = plr.CharacterAdded:Connect(function(char)
     task.wait(0.5)
     local g = leaderstats:WaitForChild("Glove", 5)
     if g and g.Value == "Depth" then
@@ -234,7 +166,7 @@ plr.CharacterConnection = plr.CharacterAdded:Connect(function(char)
 end)
 
 -- ==========================================
---  DISPARADOR PRINCIPAL DEL SCRIPT (CON FILTROS SEGURS)
+--  DISPARADOR PRINCIPAL DEL SCRIPT
 -- ==========================================
 local m, g, s = CreateGloveModel()
 if m and g and s then
