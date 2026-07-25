@@ -1,4 +1,4 @@
--- [[ Script Final Perfeccionado: Guante "Depth" con Base Real Iceskate ]] --
+-- [[ Script Final: Guante "Depth" con Base Real Iceskate ]] --
 
 local plr = game:GetService("Players").LocalPlayer
 local leaderstats = plr:WaitForChild("leaderstats", 5)
@@ -11,7 +11,6 @@ local function CreateGloveModel()
     local model = Instance.new("Model", workspace)
     model.Name = "nameModel"
 
-    -- Aseguramos con paciencia que el Lobby cargó por completo en tu pantalla
     local lobby = workspace:WaitForChild("Lobby", 10)
     if not lobby then return nil, nil, nil end
 
@@ -31,9 +30,9 @@ local function CreateGloveModel()
         glove:FindFirstChildOfClass("ClickDetector"):Destroy()
     end
 
-    -- CORREGIDO: Rotación invertida al lado contrario para que quede perfectamente de pie y alineado
+    -- CORREGIDO: Giramos el guante hacia arriba en el eje X para que quede vertical como los normales
     local char = plr.Character or plr.CharacterAdded:Wait()
-    model:PivotTo(char.HumanoidRootPart.CFrame * CFrame.new(0, -1, -8) * CFrame.Angles(math.rad(0), math.rad(-90), math.rad(0)))
+    model:PivotTo(char.HumanoidRootPart.CFrame * CFrame.new(0, 0, -8) * CFrame.Angles(math.rad(90), 0, 0))
 
     return model, glove, stand
 end
@@ -42,7 +41,7 @@ end
 local function Customize(Model, Glove, Stand)
     if not Model then return end
     Glove.Material = "Neon"
-    Glove.Color = Color3.fromRGB(0, 180, 255) -- Color azul cyan
+    Glove.Color = Color3.fromRGB(0, 180, 255)
     Glove.Name = "Glove"
     Stand.Name = "Stand"
 
@@ -98,7 +97,7 @@ local function Customize(Model, Glove, Stand)
     p.Size = NumberSequence.new(0.5, 0)
 end
 
--- 3. APLICA LA TEXTURA NEÓN Y EL COLOR AZUL AL GUANTE QUE LLEVAS EN LA MANO
+-- 3. APLICA LA TEXTURA NEÓN Y EL COLOR AZUL AL GUANTE EN MANO
 local function ApplyCustomGloveVisuals()
     local char = plr.Character
     if char then
@@ -119,7 +118,7 @@ local function ApplyCustomGloveVisuals()
     end
 end
 
--- 4. INTERACCIÓN: EQUIPA ICESKATE AUTOMÁTICAMENTE Y CAMBIA TEXTURA
+-- 4. INTERACCIÓN: EQUIPA ICESKATE AUTOMÁTICAMENTE
 local function ClickDetection(Glove)
     if not Glove then return end
     local repStorage = game:GetService("ReplicatedStorage")
@@ -165,8 +164,79 @@ CharacterConnection = plr.CharacterAdded:Connect(function(char)
     end
 end)
 
+-- 6. MÓDULO DE HABILIDAD ULTRA ÉPICA: HIPER DESLIZAMIENTO (TECLA E)
+local UserInputService = game:GetService("UserInputService")
+
+UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+    if gameProcessedEvent then return end
+    
+    if input.KeyCode == Enum.KeyCode.E then
+        local g = leaderstats:WaitForChild("Glove", 5)
+        local char = plr.Character
+        
+        if g and g.Value == "Depth" and char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") then
+            local root = char.HumanoidRootPart
+            local hum = char.Humanoid
+            
+            -- [AUDIO]
+            local sound = Instance.new("Sound", root)
+            sound.SoundId = "rbxassetid://72677561439951"
+            sound.Volume = 2.5
+            sound.Looped = true
+            sound:Play()
+            
+            -- [LUZ AZUL]
+            local light = Instance.new("PointLight", root)
+            light.Color = Color3.fromRGB(0, 180, 255)
+            light.Range = 30
+            light.Brightness = 6
+            
+            -- [PARTÍCULAS]
+            local trailParticles = Instance.new("ParticleEmitter", root)
+            trailParticles.Texture = "rbxassetid://241594247"
+            trailParticles.Color = ColorSequence.new(Color3.fromRGB(0, 255, 255))
+            trailParticles.Rate = 75
+            trailParticles.Speed = NumberRange.new(5)
+            trailParticles.Size = NumberSequence.new(0.6, 0)
+
+            -- [HABILIDAD NATIVA]
+            task.spawn(function()
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("IceskateAbility", 2) or game:GetService("ReplicatedStorage"):WaitForChild("GloveAbility", 2)
+                if remote then
+                    remote:FireServer(true)
+                end
+            end)
+
+            -- [VELOCIDAD EXTREMA]
+            local attachment = Instance.new("Attachment", root)
+            local linearVelocity = Instance.new("LinearVelocity", root)
+            linearVelocity.Attachment0 = attachment
+            linearVelocity.VectorVelocity = root.CFrame.LookVector * 95 
+            linearVelocity.MaxForce = 999999
+            
+            hum.PlatformStand = true 
+            
+            task.wait(3.0)
+            
+            -- [LIMPIEZA AL TERMINAR]
+            linearVelocity:Destroy()
+            attachment:Destroy()
+            trailParticles:Destroy()
+            light:Destroy()
+            
+            sound:Stop()
+            sound:Destroy()
+            
+            hum.PlatformStand = false 
+            
+            g.Value = "Depth"
+            ApplyCustomGloveVisuals()
+        end
+    end
+end)
+
 -- ==========================================
---  DISPARADOR PRINCIPAL DEL SCRIPT
+--  DISPARADOR PRINCIPAL DEL SCRIPT (AL FINAL)
 -- ==========================================
 local m, g, s = CreateGloveModel()
 if m and g and s then
