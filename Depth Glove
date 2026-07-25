@@ -1,4 +1,4 @@
--- [[ Script Supremo: Guante "Depth" con Auto-Lobby Bug e Iceskate ]] --
+-- [[ Script Optimizado: Guante "Depth" con Bypass de Identidad "Iceskate" ]] --
 
 local plr = game:GetService("Players").LocalPlayer
 local leaderstats = plr:WaitForChild("leaderstats", 5)
@@ -95,7 +95,7 @@ local function Customize(Model, Glove, Stand)
     p.Size = NumberSequence.new(0.5, 0)
 end
 
--- REAPLICA LA TEXTURA AZUL CUSTOM AL GUANTE REAL EN MANO
+-- APLICA LA TEXTURA AZUL CUSTOM AL GUANTE EN MANO
 local function ApplyCustomGloveVisuals()
     local char = plr.Character
     if char then
@@ -115,7 +115,7 @@ local function ApplyCustomGloveVisuals()
     end
 end
 
--- 3. INTERACCIÓN DE EQUIPADO Y GLITCH AUTOMÁTICO AL ENTRAR AL PORTAL
+-- 3. INTERACCIÓN DE EQUIPADO
 local function ClickDetection(Glove)
     local repStorage = game:GetService("ReplicatedStorage")
     local equipPart = repStorage:WaitForChild("GloveEquipParticle", 5)
@@ -136,37 +136,6 @@ local function ClickDetection(Glove)
               ApplyCustomGloveVisuals()
            end)
 
-           -- ========================================================
-           -- PROCESO DE GLITCH AUTOMÁTICO (BUG DE DETECCIÓN)
-           -- ========================================================
-           local connection
-           connection = plr.CharacterAdded:Connect(function(newChar)
-               local root = newChar:WaitForChild("HumanoidRootPart", 5)
-               
-               -- Esperamos un breve momento a ver si entras al portal de la Arena
-               task.wait(0.2)
-               
-               -- Si las coordenadas detectan que saliste del Lobby (estás en la arena)
-               if root and root.Position.Y < -20 then 
-                   local arenaPos = root.CFrame -- Guardamos las coordenadas exactas de la Arena
-                   
-                   -- Matamos al jugador ultra rápido teletransportándolo al vacío profundo
-                   root.CFrame = CFrame.new(root.Position.X, -500, root.Position.Z)
-                   connection:Disconnect() -- Apagamos el detector para que no buclee
-                   
-                   -- Esperamos a que reaparezcas muerto en el Lobby y te regresamos a la arena con el bug activo
-                   local nuevoChar = plr.CharacterAdded:Wait()
-                   local nuevoRoot = nuevoChar:WaitForChild("HumanoidRootPart", 5)
-                   
-                   task.wait(0.1)
-                   nuevoRoot.CFrame = arenaPos -- Te devuelve a la arena con los pedestales bugeados
-                   
-                   -- Sincronizamos tus estadísticas y skin de nuevo
-                   if g then g.Value = "Depth" end
-                   ApplyCustomGloveVisuals()
-               end
-           end)
-
            local s = equip:Clone()
            s.Parent = Glove
            for i,v in next, s:GetDescendants() do if v:IsA("ParticleEmitter") then v:Emit(5) end end 
@@ -175,8 +144,11 @@ local function ClickDetection(Glove)
     end)
 end
 
--- 4. CONTROL DE LA TECLA E USANDO EL BUG ACTIVO
+-- 4. CONTROL DE LA TECLA E CON VERSIONES DE NOMBRE (TU IDEA)
 local UserInputService = game:GetService("UserInputService")
+
+-- Lista con todas las variantes conocidas del guante para engañar al sistema
+local NOMBRES_ICESKATE = {"Iceskate", "Ice Skate", "IceSkate", "Skate"}
 
 UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
     if gameProcessedEvent then return end
@@ -185,27 +157,25 @@ UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
         local g = leaderstats:WaitForChild("Glove", 5)
         
         if g and g.Value == "Depth" then
-            -- Gracias al Lobby Bug, el clickdetector de Iceskate sí responderá desde la arena
-            if workspace.Lobby:FindFirstChild("Iceskate") then
-                fireclickdetector(workspace.Lobby.Iceskate.ClickDetector)
-            end
             
-            g.Value = "Iceskate"
-            
+            -- El script prueba de forma ultra rápida cada nombre en tu inventario local
+            -- y dispara el evento para ver cuál acepta el servidor, todo en 0.05 segundos
             task.spawn(function()
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("IceskateAbility", 2) or game:GetService("ReplicatedStorage"):WaitForChild("GloveAbility", 2)
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("IceskateAbility", 2) 
+                    or game:GetService("ReplicatedStorage"):WaitForChild("GloveAbility", 2)
+                
                 if remote then
-                    remote:FireServer(true)
+                    for _, nombrePrueba in ipairs(NOMBRES_ICESKATE) do
+                        g.Value = nombrePrueba -- Cambia el nombre en milisegundos
+                        remote:FireServer(true) -- Envía la patinada
+                    end
                 end
             end)
             
-            task.wait(0.08) 
+            -- Esperamos un instante a que el servidor reciba los disparos
+            task.wait(0.06) 
             
-            if workspace.Lobby:FindFirstChild("Default") then
-                fireclickdetector(workspace.Lobby.Default.ClickDetector)
-            end
-            
-            task.wait(0.12)
+            -- Restauramos tu identidad visual original de inmediato
             g.Value = "Depth"
             ApplyCustomGloveVisuals()
         end
